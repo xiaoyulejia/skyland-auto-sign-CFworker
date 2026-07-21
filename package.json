@@ -1,0 +1,21 @@
+{
+  "name": "skyland-auto-sign-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --test-scheduled",
+    "deploy": "wrangler deploy",
+    "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "latest",
+    "@types/crypto-js": "latest",
+    "@types/pako": "latest",
+    "typescript": "latest",
+    "wrangler": "latest"
+  },
+  "dependencies": {
+    "crypto-js": "latest",
+    "pako": "latest"
+  }
+}

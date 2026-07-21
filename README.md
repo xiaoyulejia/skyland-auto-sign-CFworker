@@ -1,266 +1,371 @@
-# skyland-auto-sign
+# 森空岛自动签到 · Cloudflare Workers
 
-明日方舟森空岛一键签到脚本，基于python
+[English](./README_EN.md) | 简体中文
 
-有三种方法部署
-> 1.自己手动在电脑上运行（不想挂载在服务器上的用户推荐这个，因为可以配合MAA一键签到）
->
-> 2.在云函数上部署（推荐，省时省力，不用装环境，几乎不用管）
->
-> 3.使用Github Actions托管（相比云函数来讲非常推荐，因为有日志会存储，而且也免费）
->
-> 4.使用家用NAS面板部署
->
+将森空岛自动签到运行在 Cloudflare Workers 上，无需自建服务器。Worker 通过 Cron Trigger 每天自动执行签到，也提供带鉴权的 HTTP 接口用于手动触发。
 
-## 快速导航
+> [!IMPORTANT]
+> 本项目是非官方工具，仅供学习和个人使用，与鹰角网络、森空岛及 Cloudflare 无关。账号 Token 等同于登录凭证，请自行评估使用风险，切勿将 Token 提交到 Git、粘贴到 Issue，或分享在日志和截图中。
 
-- [在自己电脑上运行](#mode1)
-    - [配合MAA运行](#maa)
-- [在云函数上运行](#mode2)
-  - [使用手机进行操作](#mobile)
-- [使用Github Actions托管](#mode3)
-- [使用家用NAS](#mode4)
-- [多账号支持](#multiple_account)
-- [多端登录问题](#multiple_login)
-- [有关新版本参数验证](#sign-headers)
-- [有关新版本获得Cred必传的dId参数](#dId)
+## 功能
 
-[视频用法]( https://www.bilibili.com/video/BV1DP411h7s6)
+- 支持《明日方舟》和《明日方舟：终末地》森空岛签到
+- 支持多个森空岛账号
+- 使用 Cloudflare Cron Trigger 定时执行
+- 支持 Server酱³、Qmsg 和 PushPlus 结果通知
+- 支持通过带 Bearer 鉴权的 HTTP `POST` 请求手动触发
+- 支持在手动请求的 JSON 请求体中临时传入森空岛 Token
+- 使用 Cloudflare Secrets 保存 Token，不在源码和 Wrangler 配置中保存敏感信息
 
-<a name="mode1"></a>
+## 准备工作
 
-## 方法1
+- [Node.js](https://nodejs.org/) 当前 LTS 版本（建议 Node.js 20 或更高版本）
+- npm
+- 一个有效的森空岛 Token
 
-1.安装python（3.9版本及以上）。
+只有部署线上 Worker 时才需要 [Cloudflare](https://dash.cloudflare.com/) 账号。本地运行不需要 Cloudflare 账号，也不需要执行 `wrangler login`。
 
-2.克隆源代码
+## 获取森空岛 Token
 
-3.命令提示符运行`python src/main.py`（结果输出如下就代表你成功了）
-![img.png](assets/img_0.png)
+1. 使用浏览器登录[森空岛官网](https://www.skland.com/)。
 
-（以上3步可以用我打好的exe文件直接运行，链接见[release](https://gitee.com/FancyCabbage/skyland-auto-sign/releases)
+   ![森空岛官网](./assets/img.png)
 
-4.本软件有3种模式：
+2. 保持登录状态，访问 <https://web-api.skland.com/account/info/hg>。
+3. 页面会返回 JSON。找到 `data.content` 字段，只复制它的字符串值，不要复制字段名、引号或整段 JSON。
 
-第一个模式和第二个模式不多说了，填入你的信息即可。
+返回内容的结构大致如下，其中 `这里才是需要复制的Token` 是示例占位符：
 
-就是注意一下输入的密码是不会显示的，但实际是有的，这点需要注意一下！
-
-如果第一种模式和第二种模式你都没法过人机验证的话，可以使用第三种模式：
-
-登录电脑的森空岛[官网](https://www.skland.com/)
-![img.png](assets/img.png)
-
-登录完成后，访问[这个网址](https://web-api.skland.com/account/info/hg) 。然后复制这里的所有内容，粘贴进去即可。
-![img_1.png](assets/img_1.png)
-![img_2.png](assets/img_2.png)
-
-最后再次启动的时候，脚本就不会再询问你是否添加账号了，而是直接帮你签到了
-
-1.3版本在脚本路径下多了一个`添加账号.bat`,双击运行会再次出现登陆界面，按照步骤走可以再次添加一个账号
-<a name="maa"></a>
-
-### MAA支持
-
-可以使用MAA自动执行脚本
-
-MAA在连接设置里有运行前脚本，输入`main.py`的路径后，每次连接模拟器时会自动帮你签到。
-
-如果你用的exe版本的，请输入`main.exe`的路径！
-![img_3.png](assets/img_3.png)
-
-第一次执行的话应该还是会出现这个东西
-![img_4.png](assets/img_4.png)
-
-设置完毕后直接应该会执行完成，以后都会这样
-![img_5.png](assets/img_5.png)
-
-TOKEN和日志应该都会被存储在MAA根路径下
-![img_6.png](assets/img_6.png)
-
-<a name="mode2"></a>
-
-## 方法2
-
-使用华为云挂载服务器签到（华为云有每月免费额度）
-
-在`cloud_functions`文件夹下的代码是华为云的适配好的代码。
-
-1.首先注册登录华为云账号
-![img_7.png](assets/img_7.png)
-
-2.注册且登录完成后，进入[这个网址](https://console.huaweicloud.com/functiongraph)
-
-3.进入后可能要求你实名认证，实名认证一下即可。
-
-4.完成后点击右上角的'创建函数'按钮
-![img_8.png](assets/img_8.png)
-
-5.进入选择运行时环境为`定制运行时`， 并填一下脚本名称（随便填）。其它设置不用动
-![img_9.png](assets/img_9.png)
-
-6.进来后是这样的界面，点击右上角上传自zip文件（或者你在左边的编辑器里自己把文件一个个创建好复制粘贴进去也行）
-![img_10.png](assets/img_10.png)
-
-7.上传
-![img_11.png](assets/img_11.png)
-
-8.上传完成后应该是这个样子的
-![img_12.png](assets/img_12.png)
-
-9.选中`INPUT_HYPERGRYPH_TOKEN.txt`，在右边添加你的鹰角通行证.支持多个，换行添加下一个即可。
-![img_13.png](assets/img_13.png)
-
-10.保存完毕后，可以点击测试测试一下脚本。创建测试这里直接点击创建即可
-![img_14.png](assets/img_14.png)
-
-11.正常结束后是这个样子的（记得保存和部署）：
-![img_15.png](assets/img_15.png)
-
-12.为了让脚本每天执行，我们需要创建一个触发器
-![img_16.png](assets/img_16.png)
-
-触发器类型请选择`定时触发器`
-![img_17.png](assets/img_17.png)
-
-触发器类型选择`Cron表达式`
-![img_18.png](assets/img_18.png)
-
-然后填入这串东西`0 1 1 * * ?`
-它指的是每天凌晨1点01分会执行一次
-![img_19.png](assets/img_19.png)
-
-然后确定保存即可
-
-最后大功告成，等着每天发奖励即可！
-
-注意：如果森空岛登录失效，则可能需要重新配置你的鹰角网络通行证！
-
-<a name="mobile"></a>
-
-### 使用手机操作
-
-//TODO
-
-<a name="mode3"></a>
-
-## 方法3
-
-使用Github Action自动运行脚本
-
-本方法需要你有一定的git使用经验
-
-首先确认自己的github处于登录状态，然后自己新建一个仓库
-
-将本仓库的源代码全部下载下来，上传到github
-
-进入自己仓库的项目主页后，在上方的菜单中进入Settings > Secrets and variables > Actions
-
-点击 New repository secret
-
-
- **创建名为`TOKEN`的环境变量（注意变量名全大写），并填入你的鹰角网络通行证，如果要管理多个账号，换行即可** 
-
- **如果要开启 Server酱³ APP 推送的话，就创建名为 `SC3_SENDKEY` 的环境变量；如果是第一次使用 Server酱³ 的话，需要到 [Server酱³ 官网](https://sc3.ft07.com/) 注册一个账号，再在手机上下载 Server酱³ App。**
-
-`SC3_SENDKEY`: Server酱³ SendKey（形如 sctp12345tXXXX...）
-
-
-如果是第一次使用GitHub Action的话，还需要手动打开这个功能 在你仓库上方菜单中进入Actions
-
-点击 I understand... enable them > Enable workflow
-
-之后就可以自动运行签到了, 想要手动测试的话，选择左侧的Auto Sign > Run workflow, 刷新页面就能看到结果了
-
-现在可以在Github Action Variable中设置变量`EXIT_WHEN_FAIL = on`，当签到发生错误时，脚本会返回错误，进而你会收到来自Github的邮件，及时知道脚本运行情况
-
-<a name="mode3"></a>
-
-## 使用NAS部署
-
-其实和Github Action的配置方式一样，导入脚本以后， **创建一个`TOKEN`的环境变量** 即可。
-
- **如果要开启 Server酱³ APP 推送的话，就创建名为 `SC3_SENDKEY` 的环境变量。如果是第一次使用 Server酱³ 的话，需要到 [Server酱³ 官网](https://sc3.ft07.com/) 注册一个账号，再在手机上下载 Server酱³ App。** 
-
-`SC3_SENDKEY`: Server酱³ SendKey（形如 sctp12345tXXXX...）。
-
-
-每个面板可能创建方式不太一样，不展示了
-
-<a name="multiple_account"></a>
-
-## 多账号支持
-
-软件支持多个账号添加，在文件里换行即可
-
-//todo
-
-### 使用浏览器登录多个账号获得TOKEN时要注意的问题
-
-**不要去登出账号，否则鹰角网络通行证会失效！**
-
-如果要添加多个账号，请删除浏览器缓存。或者使用浏览器自带的隐私浏览模式，拿到Token后，关闭隐私窗口，再登录一次即可！
-![img_20.png](assets/img_20.png)
-![img_21.png](assets/img_21.png)
-
-<a name="multiple_account"></a>
-
-## 多端登录的问题
-
-同一账号多端登录是没问题的，但是要注意一点就是电脑在用密码登录后，手机客户端有可能会被挤掉
-
-最后就是别手贱去点客户端里的清理会话，因为那样子会把所有的登录状态清空
-
-## sign-header
-
-新版本森空岛添加了参数验证，有两个方法可以绕过，推荐第一种方法
-
-1.森空岛签名请求头算法：
-
-接口地址（不包括网址） + 如果是GET则使用网址问号后面的参数。如果是POST则使用body的json的字符串 + 时间戳 +
-请求头的四个重要参数(`platform`,`timestamp`,`dId`和`vName`).toJSON()
-
-将此字符串做HMAC加密，算法为SHA-256，密钥为请求cred接口会返回的一个token
-
-再将加密后的字符串做MD5即得到签名
-
-例子：
-
-```text
-    
-    拼接的字符串：
-    /api/v1/game/player/binding1695184599{"platform":"","timestamp":"1695184599","dId":"","vName":""}
-    将其做hmac-sha256
-    6b0516d1325dea1207e03f6840cd0c15ef2f55959c3d0ed2f18d99102a9cc7f5
-    再做md5
-    92229bf3c18c476e77bcd70c2bd997d3
-    最后就是sign的头了
-    
+```json
+{
+  "code": 0,
+  "data": {
+    "content": "这里才是需要复制的Token"
+  },
+  "msg": "..."
+}
 ```
 
-注意：
+> [!IMPORTANT]
+> 请只在本地 `.dev.vars` 或 Cloudflare Secrets 中保存该值。不要将真实 Token 写入 `.dev.vars.example`、`wrangler.toml`、源代码或文档。
 
-请求头四个值`platform`,`timestamp`,`dId`和`vName`必传，然后注意一下字符串顺序，四个值必须按照这样的顺序拼接
+## 部署
 
-其中`platform`,`dId`和`vName`里面的值随便填
+### 1. 获取代码并安装依赖
 
-`timestamp`为时间戳，以秒为单位
-不过`timestamp`因为精度问题容易造成服务器响应`请勿修改设备时间`，此时把这个时间戳稍微减少几秒就行
-
-
-2.使用旧版本森空岛请求头，防止验参
-
-```text
-'User-Agent': 'Skland/1.0.1 (com.hypergryph.skland; build': '100001014; Android 31; ) Okhttp/4.11.0',
-'vCode': '100001014',
-'vName': '1.0.1',
-'dId': 'de9759a5afaa634f',
-'platform': '1'
+```bash
+git clone https://github.com/xiaoyulejia/skyland-auto-sign-CFworker.git
+cd skyland-auto-sign-CFworker
+npm ci
+npm run check
 ```
 
-<a name="dId"></a>
-## 有关新版本获得Cred必传的dId参数
+### 2. 创建本地 Secret 文件
 
-2024.9.10 森空岛登入接口引入了数美接口，请求头必须传递dId参数，导致无法正常登陆
+Windows PowerShell：
 
-现已解决，具体实现看`SecuritySm.py`文件
+```powershell
+Copy-Item .dev.vars.example .dev.vars
+```
+
+macOS / Linux：
+
+```bash
+cp .dev.vars.example .dev.vars
+```
+
+编辑 `.dev.vars`：
+
+```dotenv
+TOKEN="你的森空岛Token"
+WORKER_AUTH="一段足够长且随机的字符串"
+```
+
+默认的 Cron 定时签到需要同时配置 `TOKEN` 和 `WORKER_AUTH`：
+
+- `TOKEN`：Cron 定时签到使用的森空岛登录凭证。如果只使用 HTTP 请求体临时传入 Token，可以不配置该 Secret。
+- `WORKER_AUTH`：保护 HTTP 手动触发接口的独立密码，请勿与森空岛 Token 相同；使用 HTTP 接口时必须配置。
+
+多账号可用英文逗号分隔：
+
+```dotenv
+TOKEN="第一个Token,第二个Token,第三个Token"
+```
+
+如需结果推送，可在 `.dev.vars` 中配置对应项目：
+
+```dotenv
+SC3_SENDKEY="Server酱³ SendKey"
+SC3_UID="Server酱³ UID，可留空"
+QMSG_KEY="Qmsg Key"
+PUSHPLUS_KEY="PushPlus Token"
+```
+
+`.dev.vars` 已被 `.gitignore` 排除。提交前仍建议运行 `git status --short`，确认它没有出现在待提交文件中。
+
+### 3. 本地测试
+
+```bash
+npm run dev
+```
+
+Wrangler 默认监听 `http://localhost:8787`。在另一个终端中手动触发：
+
+```bash
+curl -X POST "http://localhost:8787/" \
+  -H "Authorization: Bearer 你的WORKER_AUTH"
+```
+
+测试定时任务：
+
+```bash
+curl "http://localhost:8787/cdn-cgi/handler/scheduled?format=json"
+```
+
+以上两种测试都会访问森空岛并可能执行真实签到。
+
+### 4. 发布到 Cloudflare
+
+登录 Cloudflare：
+
+```bash
+npx wrangler login
+```
+
+先做一次仅构建检查：
+
+```bash
+npx wrangler deploy --dry-run
+```
+
+首次发布时，将 `.dev.vars` 中的 Secret 与 Worker 一起安全上传：
+
+```bash
+npx wrangler deploy --secrets-file .dev.vars
+```
+
+部署完成后，Wrangler 会显示 Worker 的 `workers.dev` 地址。Secret 的值不会写入代码仓库或 `wrangler.toml`。
+
+以后只更新某个 Secret 时，可使用交互式命令并按提示粘贴值：
+
+```bash
+npx wrangler secret put TOKEN
+npx wrangler secret put WORKER_AUTH
+```
+
+可选推送服务同理，只设置实际使用的项目：
+
+```bash
+npx wrangler secret put SC3_SENDKEY
+npx wrangler secret put SC3_UID
+npx wrangler secret put QMSG_KEY
+npx wrangler secret put PUSHPLUS_KEY
+```
+
+修改代码后重新发布：
+
+```bash
+npm run check
+npm run deploy
+```
+
+## 验证线上部署
+
+使用部署输出的地址发送带鉴权的 `POST` 请求：
+
+```bash
+curl -X POST "https://skyland-auto-sign.<你的子域>.workers.dev/" \
+  -H "Authorization: Bearer 你的WORKER_AUTH"
+```
+
+查看实时日志：
+
+```bash
+npx wrangler tail
+```
+
+接口只接受 `POST`。缺少或错误的 `Authorization` 会返回 `401`；未配置 `WORKER_AUTH` 会返回 `503`。
+
+### 使用 curl 临时传入 Token
+
+也可以在 JSON 请求体中提供 `token`。该 Token 仅用于当前请求，不会被 Worker 保存或写入日志；请求体未提供 `token` 时，Worker 会继续使用 Cloudflare 中的 `TOKEN` Secret。
+
+不建议把真实 Token 和 `WORKER_AUTH` 直接写进命令，因为它们可能保留在 Shell 历史中。先设置当前终端的环境变量：
+
+Windows PowerShell：
+
+```powershell
+$env:SKLAND_TOKEN = "你的森空岛Token"
+$env:WORKER_AUTH = "你的WORKER_AUTH"
+
+$body = @{ token = $env:SKLAND_TOKEN } | ConvertTo-Json -Compress
+curl.exe -X POST "https://skyland-auto-sign.<你的子域>.workers.dev/" `
+  -H "Authorization: Bearer $env:WORKER_AUTH" `
+  -H "Content-Type: application/json" `
+  --data-binary $body
+```
+
+macOS / Linux（需要 `jq`）：
+
+```bash
+read -rsp "Skland Token: " SKLAND_TOKEN && echo
+read -rsp "WORKER_AUTH: " WORKER_AUTH && echo
+export SKLAND_TOKEN WORKER_AUTH
+
+printf '%s' "$SKLAND_TOKEN" \
+  | jq -Rs '{token: .}' \
+  | curl -X POST "https://skyland-auto-sign.<你的子域>.workers.dev/" \
+      -H "Authorization: Bearer ${WORKER_AUTH}" \
+      -H "Content-Type: application/json" \
+      --data-binary @-
+
+unset SKLAND_TOKEN WORKER_AUTH
+```
+
+多个账号仍可在 `token` 字符串中用英文逗号分隔。线上必须配置 `WORKER_AUTH`；如果只使用这种手动调用方式，可以不配置 `TOKEN` Secret，但 Cron 定时签到仍然需要 `TOKEN` Secret。
+
+## 定时任务
+
+[wrangler.toml](./wrangler.toml) 默认配置：
+
+```toml
+[triggers]
+crons = ["0 23 * * *"]
+```
+
+Cloudflare Cron 使用 UTC，因此该配置表示每天 UTC 23:00，即北京时间次日 07:00。修改 Cron 后重新运行 `npm run deploy`；配置传播可能需要几分钟。
+
+## MAA 开始任务前自动签到
+
+MAA 的“开始前脚本”可以在每次任务开始前调用已经部署好的 Worker。仓库提供：
+
+- Windows：[scripts/maa-sign.bat](./scripts/maa-sign.bat)
+- macOS / Linux：[scripts/maa-sign.sh](./scripts/maa-sign.sh)
+- 本地配置模板：[scripts/maa-curl.env.example](./scripts/maa-curl.env.example)
+
+### 1. 创建 MAA 本地配置
+
+复制模板，但不要修改或填写 `.example` 文件本身。
+
+Windows PowerShell：
+
+```powershell
+Copy-Item scripts\maa-curl.env.example scripts\maa-curl.env
+```
+
+macOS / Linux：
+
+```bash
+cp scripts/maa-curl.env.example scripts/maa-curl.env
+```
+
+编辑 `scripts/maa-curl.env`：
+
+```dotenv
+WORKER_URL=https://skyland-auto-sign.<你的子域>.workers.dev/
+WORKER_AUTH=你的WORKER_AUTH
+SKLAND_TOKEN=从data.content复制的森空岛Token
+```
+
+### 2. 先手动测试脚本
+
+Windows：
+
+```powershell
+scripts\maa-sign.bat
+```
+
+macOS / Linux：
+
+```bash
+chmod +x scripts/maa-sign.sh
+./scripts/maa-sign.sh
+```
+
+### 3. 添加到 MAA
+
+进入 MAA 的“设置 → 连接设置”，找到“开始前脚本”，选择 `maa-sign.bat` 的绝对路径。macOS / Linux 版本填写 `maa-sign.sh` 的绝对路径。不同 MAA 版本的选项名称可能略有差异。
+
+![MAA 开始前脚本位置](./assets/img_3.png)
+
+配置完成后，MAA 每次开始任务都会先运行签到脚本。日志中显示“完成任务：开始前脚本”代表脚本流程已经结束；签到是否成功仍应以脚本输出的 Worker JSON 为准。
+
+![MAA 开始前脚本完成](./assets/img_5.png)
+
+> [!IMPORTANT]
+> MAA 自动调用需要一个可访问的线上 `WORKER_URL`。可以使用你自己部署的 Worker，或使用你信任的服务提供者明确提供的地址和 `WORKER_AUTH`。不要把 Token 发送给来源不明的公共 Worker，因为 Worker 的运营者在请求处理期间能够接触该 Token。
+
+## 无需部署：直接在本地运行
+
+这种方式适合只想立即执行一次签到的用户。程序运行在自己的电脑上，Token 不需要交给任何第三方，也不需要 Cloudflare 账号。关闭本地 Wrangler 后服务就会停止，因此这种方式不会自动执行每天的 Cron 签到。
+
+### 1. 下载并安装
+
+```bash
+git clone https://github.com/xiaoyulejia/skyland-auto-sign-CFworker.git
+cd skyland-auto-sign-CFworker
+npm ci
+```
+
+### 2. 配置本地调用密码
+
+Windows PowerShell：
+
+```powershell
+Copy-Item .dev.vars.example .dev.vars
+```
+
+macOS / Linux：
+
+```bash
+cp .dev.vars.example .dev.vars
+```
+
+编辑 `.dev.vars`，将 `WORKER_AUTH` 改为一个仅供本机使用的密码。使用下面的 curl 临时传入 Token 时，`TOKEN` 可以留空：
+
+```dotenv
+TOKEN=""
+WORKER_AUTH="choose-a-local-password"
+```
+
+### 3. 启动本地 Worker
+
+```bash
+npm run dev
+```
+
+保持该终端运行。Wrangler 默认会在 `http://localhost:8787` 启动本地服务。
+
+### 4. 使用 curl 签到
+
+在另一个 PowerShell 窗口执行：
+
+```powershell
+$token = Read-Host "请输入森空岛 Token"
+$body = @{ token = $token } | ConvertTo-Json -Compress
+
+curl.exe -X POST "http://localhost:8787/" `
+  -H "Authorization: Bearer choose-a-local-password" `
+  -H "Content-Type: application/json" `
+  --data-binary $body
+```
+
+macOS / Linux（需要 `jq`）：
+
+```bash
+read -rsp "Skland Token: " SKLAND_TOKEN && echo
+
+printf '%s' "$SKLAND_TOKEN" \
+  | jq -Rs '{token: .}' \
+  | curl -X POST "http://localhost:8787/" \
+      -H "Authorization: Bearer choose-a-local-password" \
+      -H "Content-Type: application/json" \
+      --data-binary @-
+
+unset SKLAND_TOKEN
+```
+
+将命令里的 `choose-a-local-password` 替换为 `.dev.vars` 中完全相同的 `WORKER_AUTH`。多个账号可在 Token 中使用英文逗号分隔。执行结束后，在运行 Wrangler 的窗口按 `Ctrl+C` 停止服务。
+
+> [!NOTE]
+> “无需部署”指在用户自己的电脑上运行。项目不会公开你的线上 Worker 地址或共享 `WORKER_AUTH`；共享调用密码会使任何知道密码的人都能消耗你的 Worker 资源。

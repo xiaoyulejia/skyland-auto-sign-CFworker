@@ -1,7 +1,37 @@
-build
-dist
+# Dependencies and build output
+node_modules/
+build/
+dist/
 skyland.spec
-logs
-.idea
+
+# Cloudflare/Wrangler local state
+.wrangler/
+
+# Local secrets and environment files
+.dev.vars*
+!.dev.vars.example
+.env
+.env.*
+!.env.example
+!.env.*.example
 TOKEN.txt
+token.txt
+secrets.json
+secrets.*.json
+scripts/maa-curl.env
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Logs and local tooling
+logs/
+*.log
+.idea/
+.vscode/
 __pycache__/
+*.py[cod]
+
+# Operating system files
+.DS_Store
+Thumbs.db

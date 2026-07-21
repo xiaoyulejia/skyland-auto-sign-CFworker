@@ -1,0 +1,7 @@
+name = "skyland-auto-sign"
+main = "src/index.ts"
+compatibility_date = "2026-07-19"
+
+[triggers]
+# Cloudflare uses UTC. 07:00 Asia/Shanghai == 23:00 UTC on the previous day.
+crons = ["0 23 * * *"]
