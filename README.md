@@ -1,5 +1,7 @@
 # 森空岛自动签到 · Cloudflare Workers
 
+> 本项目已链接认可 [LINUX DO](https://linux.do) 社区。
+
 [English](./README_EN.md) | 简体中文
 
 将森空岛自动签到运行在 Cloudflare Workers 上，无需自建服务器。Worker 通过 Cron Trigger 每天自动执行签到，也提供带鉴权的 HTTP 接口用于手动触发。
