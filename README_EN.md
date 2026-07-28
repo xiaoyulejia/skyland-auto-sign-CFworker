@@ -4,9 +4,16 @@ English | [简体中文](./README.md)
 
 Run automated Skland check-ins on Cloudflare Workers without maintaining a server. A Cron Trigger performs the daily check-in, while an authenticated HTTP endpoint is available for manual runs.
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/xiaoyulejia/skyland-auto-sign-CFworker)
+<p align="center">
+  <a href="https://deploy.workers.cloudflare.com/?url=https://github.com/xiaoyulejia/skyland-auto-sign-CFworker">
+    <img src="https://deploy.workers.cloudflare.com/button" alt="Deploy to Cloudflare">
+  </a>
+</p>
 
 To deploy your own copy, click the **Deploy to Cloudflare** button above. Cloudflare will clone the repository, install dependencies, build, and deploy the Worker. You only need to enter your own `TOKEN` and `WORKER_AUTH`; Node.js and Wrangler are not required on your computer.
+
+> [!IMPORTANT]
+> This project was completed with the assistance of artificial intelligence.
 
 > [!IMPORTANT]
 > This is an unofficial project for educational and personal use. It is not affiliated with Hypergryph, Skland, or Cloudflare. Treat your account token like a password: never commit it to Git or expose it in issues, logs, or screenshots.
@@ -33,10 +40,12 @@ A [Cloudflare](https://dash.cloudflare.com/) account is required only for an onl
 
 1. Sign in to the [Skland website](https://www.skland.com/) in your browser.
 
-   ![Skland website](./assets/img.png)
+   <p align="center"><img src="./assets/img1.png" alt="Skland website" width="70%"></p>
 
 2. While still signed in, open <https://web-api.skland.com/account/info/hg>.
 3. Find the `data.content` field in the returned JSON. Copy only its string value, without the field name, quotation marks, or the complete JSON response.
+
+   <p align="center"><img src="./assets/img2.png" alt="Copy the token" width="70%"></p>
 
 The response has roughly this structure; `copy-this-token-value` is only a placeholder:
 
@@ -64,6 +73,8 @@ Click the **Deploy to Cloudflare** button at the top of this page, sign in to yo
 - `SC3_SENDKEY`, `SC3_UID`, `QMSG_KEY`, `PUSHPLUS_KEY`: Optional notification settings.
 
 The Worker uses the Cron configuration in this repository: UTC 23:00, which is 07:00 the next day in Beijing time.
+
+   <p align="center"><img src="./assets/img3.png" alt="Deployment page" width="50%"></p>
 
 ### Option 2: Command-line deployment
 
@@ -184,6 +195,23 @@ Deploy later code changes with:
 npm run check
 npm run deploy
 ```
+
+## Modify
+
+### Change the schedule
+
+- Cloudflare uses UTC. Convert from Beijing time (UTC+8) when setting the schedule.
+- [Cron syntax](https://developers.cloudflare.com/workers/configuration/cron-triggers/#supported-cron-expressions)
+- Field order: `minute → hour → day-of-month → month → day-of-week`
+- `0 23 * * *` means 23:00 UTC every day, which is 07:00 the next day in Beijing time (UTC+8).
+
+   <p align="center"><img src="./assets/img4.png" alt="Schedule settings" width="50%"></p>
+
+### Enable the HTTP endpoint or bind a custom domain
+
+You can enable the HTTP endpoint here, or bind your own Cloudflare domain.
+
+   <p align="center"><img src="./assets/img5.png" alt="HTTP endpoint and domain settings" width="50%"></p>
 
 ## Verify the deployment
 
