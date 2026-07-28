@@ -4,6 +4,10 @@
 
 将森空岛自动签到运行在 Cloudflare Workers 上，无需自建服务器。Worker 通过 Cron Trigger 每天自动执行签到，也提供带鉴权的 HTTP 接口用于手动触发。
 
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/xiaoyulejia/skyland-auto-sign-CFworker)
+
+想部署到自己的 Cloudflare 账号？点击上面的按钮即可。Cloudflare 会复制本仓库、自动安装依赖并部署 Worker；部署过程中只需要填写你自己的 `TOKEN` 和 `WORKER_AUTH`，不需要在电脑上安装 Node.js 或运行 Wrangler。
+
 > [!IMPORTANT]
 > 本项目是非官方工具，仅供学习和个人使用，与鹰角网络、森空岛及 Cloudflare 无关。账号 Token 等同于登录凭证，请自行评估使用风险，切勿将 Token 提交到 Git、粘贴到 Issue，或分享在日志和截图中。
 
@@ -50,6 +54,21 @@
 > 请只在本地 `.dev.vars` 或 Cloudflare Secrets 中保存该值。不要将真实 Token 写入 `.dev.vars.example`、`wrangler.toml`、源代码或文档。
 
 ## 部署
+
+### 方式一：一键部署（推荐）
+
+点击本页顶部的 **Deploy to Cloudflare** 按钮，登录自己的 Cloudflare 账号并按页面提示填写：
+
+- `TOKEN`：森空岛 Token。Cron 定时签到需要配置；多个账号使用英文逗号分隔。
+- `WORKER_AUTH`：手动触发接口的独立密码，请使用随机字符串，不要与 `TOKEN` 相同。
+- `SC3_SENDKEY`、`SC3_UID`、`QMSG_KEY`、`PUSHPLUS_KEY`：可选的推送配置，不使用时留空。
+
+部署完成后，Worker 会使用仓库中的 Cron 配置，每天 UTC 23:00（北京时间次日 07:00）自动执行。
+
+> [!IMPORTANT]
+> 一键部署要求本仓库保持公开，并且每个人部署的是自己的 Worker 和自己的 Secrets。请不要把自己的 Token 或 `WORKER_AUTH` 分享给其他人。
+
+### 方式二：命令行部署
 
 ### 1. 获取代码并安装依赖
 

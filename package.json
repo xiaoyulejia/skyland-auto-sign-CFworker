@@ -7,6 +7,28 @@
     "deploy": "wrangler deploy",
     "check": "tsc --noEmit"
   },
+  "cloudflare": {
+    "bindings": {
+      "TOKEN": {
+        "description": "Skland login token for scheduled sign-ins. Get data.content from https://web-api.skland.com/account/info/hg. Separate multiple accounts with commas."
+      },
+      "WORKER_AUTH": {
+        "description": "A separate random Bearer password for the manual trigger endpoint. Do not use your Skland token."
+      },
+      "SC3_SENDKEY": {
+        "description": "Optional ServerChan3 SendKey. Leave empty if unused."
+      },
+      "SC3_UID": {
+        "description": "Optional ServerChan3 UID. Usually safe to leave empty."
+      },
+      "QMSG_KEY": {
+        "description": "Optional Qmsg key. Leave empty if unused."
+      },
+      "PUSHPLUS_KEY": {
+        "description": "Optional PushPlus token. Leave empty if unused."
+      }
+    }
+  },
   "devDependencies": {
     "@cloudflare/workers-types": "latest",
     "@types/crypto-js": "latest",

@@ -4,6 +4,10 @@ English | [简体中文](./README.md)
 
 Run automated Skland check-ins on Cloudflare Workers without maintaining a server. A Cron Trigger performs the daily check-in, while an authenticated HTTP endpoint is available for manual runs.
 
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/xiaoyulejia/skyland-auto-sign-CFworker)
+
+To deploy your own copy, click the **Deploy to Cloudflare** button above. Cloudflare will clone the repository, install dependencies, build, and deploy the Worker. You only need to enter your own `TOKEN` and `WORKER_AUTH`; Node.js and Wrangler are not required on your computer.
+
 > [!IMPORTANT]
 > This is an unofficial project for educational and personal use. It is not affiliated with Hypergryph, Skland, or Cloudflare. Treat your account token like a password: never commit it to Git or expose it in issues, logs, or screenshots.
 
@@ -50,6 +54,18 @@ The response has roughly this structure; `copy-this-token-value` is only a place
 > Store this value only in your local `.dev.vars` file or in Cloudflare Secrets. Never place a real token in `.dev.vars.example`, `wrangler.toml`, source files, or documentation.
 
 ## Deployment
+
+### Option 1: One-click deployment (recommended)
+
+Click the **Deploy to Cloudflare** button at the top of this page, sign in to your Cloudflare account, and provide:
+
+- `TOKEN`: Your Skland token. Required for scheduled Cron sign-ins; separate accounts with commas.
+- `WORKER_AUTH`: A separate random password for the manual trigger endpoint.
+- `SC3_SENDKEY`, `SC3_UID`, `QMSG_KEY`, `PUSHPLUS_KEY`: Optional notification settings.
+
+The Worker uses the Cron configuration in this repository: UTC 23:00, which is 07:00 the next day in Beijing time.
+
+### Option 2: Command-line deployment
 
 ### 1. Clone and install
 
