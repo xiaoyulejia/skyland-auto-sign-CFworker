@@ -1,5 +1,7 @@
 # Skland Auto Sign-in · Cloudflare Workers
 
+> 本项目已链接认可 [LINUX DO](https://linux.do) 社区。
+
 English | [简体中文](./README.md)
 
 Run automated Skland check-ins on Cloudflare Workers without maintaining a server. A Cron Trigger performs the daily check-in, while an authenticated HTTP endpoint is available for manual runs.
