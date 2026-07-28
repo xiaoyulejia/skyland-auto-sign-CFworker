@@ -6,10 +6,13 @@
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/xiaoyulejia/skyland-auto-sign-CFworker)
 
-想部署到自己的 Cloudflare 账号？点击上面的按钮即可。Cloudflare 会复制本仓库、自动安装依赖并部署 Worker；部署过程中只需要填写你自己的 `TOKEN` 和 `WORKER_AUTH`，不需要在电脑上安装 Node.js 或运行 Wrangler。
+如果使用一键部署, 请按照下面的步骤获取森空岛的`TOKEN`和设置访问密码`WORKER_AUTH`
 
 > [!IMPORTANT]
 > 本项目是非官方工具，仅供学习和个人使用，与鹰角网络、森空岛及 Cloudflare 无关。账号 Token 等同于登录凭证，请自行评估使用风险，切勿将 Token 提交到 Git、粘贴到 Issue，或分享在日志和截图中。
+
+> [!IMPORTANT]
+> 本项目使用人工智能辅助完成, 特此提示
 
 ## 功能
 
@@ -27,16 +30,19 @@
 - npm
 - 一个有效的森空岛 Token
 
-只有部署线上 Worker 时才需要 [Cloudflare](https://dash.cloudflare.com/) 账号。本地运行不需要 Cloudflare 账号，也不需要执行 `wrangler login`。
+只有部署线上 Worker 时才需要 [Cloudflare](https://dash.cloudflare.com/) 账号。本地运行不需要 Cloudflare 账号，也不需要执行 `wrangler login`
 
 ## 获取森空岛 Token
 
-1. 使用浏览器登录[森空岛官网](https://www.skland.com/)。
+1. 使用浏览器登录[森空岛官网](https://www.skland.com/)
 
-   ![森空岛官网](./assets/img.png)
+  ![森空岛官网](./assets/img1.png){width=70%}
 
-2. 保持登录状态，访问 <https://web-api.skland.com/account/info/hg>。
-3. 页面会返回 JSON。找到 `data.content` 字段，只复制它的字符串值，不要复制字段名、引号或整段 JSON。
+
+2. 保持登录状态，访问 <https://web-api.skland.com/account/info/hg>
+3. 页面会返回 JSON。找到 `data.content` 字段，只复制它的字符串值(英文双引号直接的内容)，不要复制字段名、引号或整段 JSON
+   
+  ![Token复制](./assets/img2.png){width=70%}
 
 返回内容的结构大致如下，其中 `这里才是需要复制的Token` 是示例占位符：
 
@@ -44,14 +50,14 @@
 {
   "code": 0,
   "data": {
-    "content": "这里才是需要复制的Token"
+    "content": "这里才是需要复制的Token" // 不要复制双引号
   },
   "msg": "..."
 }
 ```
 
 > [!IMPORTANT]
-> 请只在本地 `.dev.vars` 或 Cloudflare Secrets 中保存该值。不要将真实 Token 写入 `.dev.vars.example`、`wrangler.toml`、源代码或文档。
+> 如果需要拉取后部署, 请只在本地 `.dev.vars` 或 Cloudflare Secrets 中保存该值。不要将真实 Token 写入 `.dev.vars.example`、`wrangler.toml`、源代码或文档。
 
 ## 部署
 

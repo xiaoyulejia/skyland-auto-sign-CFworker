@@ -1,5 +1,5 @@
-TOKEN=<替换为你的森空岛token>
-WORKER_AUTH=<替换为一串够长够复杂的WORKER_AUTH>
+TOKEN=
+WORKER_AUTH=
 
 
 # Optional notification services:
