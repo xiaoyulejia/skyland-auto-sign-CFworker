@@ -121,20 +121,29 @@ async function signArknights(role: Json, cred: Cred, dId: string): Promise<strin
 }
 
 async function signEndfield(role: Json, cred: Cred, dId: string): Promise<string[]> {
-  const headers = await getSignedHeaders(SIGN_URL.endfield, "POST", undefined, cred, dId);
-  headers.set("sk-game-role", `3_${role.roleId}_${role.serverId}`);
-  headers.set("referer", "https://game.skland.com/");
-  headers.set("origin", "https://game.skland.com/");
-  const response = await fetch(SIGN_URL.endfield, { method: "POST", headers });
-  const result = await response.json<Json>();
-  const prefix = `[${role.gameName}]角色${role.nickname ?? ""}(${role.channelName})`;
-  if (result.code !== 0) return [`${prefix}签到失败了！原因：${result.message}`];
-  const map = result.data.resourceInfoMap as Record<string, Json>;
-  const awards = (result.data.awardIds ?? []).map((item: Json) => {
-    const award = map[item.id];
-    return `${award.name}×${award.count}`;
-  });
-  return [`${prefix}签到成功，获得了:${awards.join(",")}`];
+  const subRoles: Json[] = role.roles ?? [];
+  if (!subRoles.length) return [`[${role.gameName}]账号(${role.channelName})没有可签到的终末地角色`];
+  const logs: string[] = [];
+  for (const sub of subRoles) {
+    const headers = await getSignedHeaders(SIGN_URL.endfield, "POST", undefined, cred, dId);
+    headers.set("sk-game-role", `3_${sub.roleId}_${sub.serverId}`);
+    headers.set("referer", "https://game.skland.com/");
+    headers.set("origin", "https://game.skland.com/");
+    const response = await fetch(SIGN_URL.endfield, { method: "POST", headers });
+    const result = await response.json<Json>();
+    const prefix = `[${role.gameName}]角色${sub.nickname ?? ""}(${role.channelName})`;
+    if (result.code !== 0) {
+      logs.push(`${prefix}签到失败了！原因：${result.message}`);
+      continue;
+    }
+    const map = result.data.resourceInfoMap as Record<string, Json>;
+    const awards = (result.data.awardIds ?? []).map((item: Json) => {
+      const award = map[item.id];
+      return `${award.name}×${award.count}`;
+    });
+    logs.push(`${prefix}签到成功，获得了:${awards.join(",")}`);
+  }
+  return logs;
 }
 
 async function signAccount(token: string, dId: string): Promise<string[]> {
@@ -178,12 +187,14 @@ async function sendPush(name: string, request: () => Promise<Response>): Promise
 async function readTokenOverride(request: Request): Promise<TokenOverrideResult> {
   if (request.body === null) return {};
 
+  const contentLength = Number(request.headers.get("content-length"));
+  if (contentLength === 0) return {};
+
   const contentType = request.headers.get("content-type")?.split(";", 1)[0].trim().toLowerCase();
   if (contentType !== "application/json") {
     return { error: Response.json({ ok: false, error: "Request body must be application/json" }, { status: 415 }) };
   }
 
-  const contentLength = Number(request.headers.get("content-length"));
   if (Number.isFinite(contentLength) && contentLength > MAX_TOKEN_LENGTH) {
     return { error: Response.json({ ok: false, error: "Request body is too large" }, { status: 413 }) };
   }
